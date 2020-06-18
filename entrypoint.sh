@@ -15,6 +15,7 @@ set -e;
 printf "Entrypoint for docker image: squid\n";
 
 ARGS="$*";
+SQUID_ARGS="$ARGS $SQUID_ARGS";
 
 SUFFIX_TEMPLATE="template";
 
@@ -94,4 +95,4 @@ $DIR_SCRIPTS/envsubst-file.sh "$DIR_CONF_TEMPLATES/$FILE_CONF.$SUFFIX_TEMPLATE" 
 
 printf "Starting squid.\n";
 
-$FILE_SQUID -f $DIR_CONF_FINAL/$FILE_CONF -NYCd 1 ${ARGS};
+$FILE_SQUID -f $DIR_CONF_FINAL/$FILE_CONF -NYCd 1 ${SQUID_ARGS};
