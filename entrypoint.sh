@@ -27,7 +27,6 @@ DIR_CONF="/etc/squid";
 DIR_CONF_FINAL="$DIR_CONF/conf";
 DIR_CONF_TEMPLATES="$DIR_CONF/conf.templates";
 DIR_PASSWD="$DIR_CONF/passwd";
-DIR_CACHE="/var/spool/squid";
 DIR_LOG="/var/log/squid";
 
 if [ ! -e "$FILE_SQUID" ];
@@ -49,7 +48,6 @@ create_dir DIR_CONF;
 create_dir DIR_CONF_FINAL;
 create_dir DIR_CONF_TEMPLATES;
 create_dir DIR_PASSWD;
-create_dir DIR_CACHE;
 create_dir DIR_LOG;
 
 printf "Deleting previous authentication data.\n";
@@ -94,13 +92,6 @@ fi
 
 $DIR_SCRIPTS/envsubst-file.sh "$DIR_CONF_TEMPLATES/$FILE_CONF.$SUFFIX_TEMPLATE" "$DIR_CONF_FINAL/$FILE_CONF";
 
-if [ ! -d "${DIR_CACHE}/00" ];
-then
-    printf "Initializing squid cache.\n";
-    $FILE_SQUID -Nz -f $DIR_CONF_FINAL/$FILE_CONF;
-fi
-
-printf "Starting squid...\n";
+printf "Starting squid.\n";
 
 $FILE_SQUID -f $DIR_CONF_FINAL/$FILE_CONF -NYCd 1 ${ARGS};
-
