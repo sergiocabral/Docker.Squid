@@ -4,16 +4,22 @@ set -e;
 
 printf "Entrypoint for docker image: squid\n";
 
+# Variables to configure externally.
 SQUID_ARGS="$* $SQUID_ARGS";
-EXEC_SQUID=$(which squid || echo "");
-SUFFIX_TEMPLATE="${SUFFIX_TEMPLATE:-.template}";
-DIR_SCRIPTS="${DIR_SCRIPTS:-/root}";
-DIR_CONF="${DIR_CONF:-/etc/squid}";
+SQUID_LOGIN_MESSAGE="${SQUID_LOGIN_MESSAGE:-Squid proxy-caching web server}";
+SQUID_CREDENTIALS_TTL="${SQUID_CREDENTIALS_TTL:-2 hours}";
+SQUID_CHILDREN="${SQUID_CHILDREN:-5 startup=5 idle=1}";
+SQUID_ALLOW_UNSECURE="${SQUID_ALLOW_UNSECURE:-}";
+
+SQUID_EXECUTABLE=$(which squid || echo "");
+SUFFIX_TEMPLATE=".template";
+DIR_CONF="/etc/squid";
 DIR_CONF_BACKUP="$DIR_CONF.original";
 DIR_CONF_TEMPLATES="$DIR_CONF.templates";
 DIR_CONF_DOCKER="$DIR_CONF.docker";
+DIR_SCRIPTS="${DIR_SCRIPTS:-/root}";
 
-if [ ! -e "$EXEC_SQUID" ];
+if [ ! -e "$SQUID_EXECUTABLE" ];
 then
     printf "Squid is not installed.\n" >> /dev/stderr;
     exit 1;
@@ -27,7 +33,7 @@ then
     
     printf "Running squid for the first time.\n";
 
-    $EXEC_SQUID -Nz;
+    $SQUID_EXECUTABLE -Nz;
 
     printf "Creating directories.\n";
 
@@ -46,7 +52,7 @@ fi
 
 printf "Tip: Use files $DIR_CONF_TEMPLATES/*$SUFFIX_TEMPLATE to make the files in the $DIR_CONF directory with replacement of environment variables with their values.\n";
 
-printf "Deleting previous authentication data.\n";
+printf "Deleting previous authentication file $DIR_CONF/passwd.\n";
 rm -f $DIR_CONF/passwd;
 
 if [ -z $SQUID_USERS ];
@@ -69,10 +75,51 @@ else
     done
 
     printf "The authentication data was saved to $DIR_CONF/passwd.\n";
+
 fi
 
 $DIR_SCRIPTS/envsubst-files.sh "$SUFFIX_TEMPLATE" "$DIR_CONF_TEMPLATES" "$DIR_CONF";
 
+# More details for squid.conf: http://www.squid-cache.org/Doc/config/auth_param/
+FILE_CONF="$DIR_CONF/squid.conf";
+FILE_CONF_TEMP="/tmp/squid.conf";
+
+rm -f $FILE_CONF_TEMP;
+
+if [ -e "$DIR_CONF/passwd" ];
+then
+    echo "auth_param basic program /usr/lib/squid/basic_ncsa_auth $DIR_CONF/passwd" >> $FILE_CONF_TEMP;
+    echo "auth_param basic children $SQUID_CHILDREN" >> $FILE_CONF_TEMP;
+    echo "auth_param basic credentialsttl $SQUID_CREDENTIALS_TTL" >> $FILE_CONF_TEMP;
+    echo "auth_param basic realm $SQUID_LOGIN_MESSAGE" >> $FILE_CONF_TEMP;
+    echo "acl password proxy_auth REQUIRED" >> $FILE_CONF_TEMP;
+    echo "http_access allow password" >> $FILE_CONF_TEMP;
+fi
+
+if [ "$SQUID_ALLOW_UNSECURE" = true ];
+then
+    echo "http_access allow !Safe_ports" >> $FILE_CONF_TEMP;
+    echo "http_access allow CONNECT !SSL_ports" >> $FILE_CONF_TEMP;
+fi
+
+if [ "$SQUID_ALLOW_UNSECURE" = false ];
+then
+    echo "http_access deny !Safe_ports" >> $FILE_CONF_TEMP;
+    echo "http_access deny CONNECT !SSL_ports" >> $FILE_CONF_TEMP;
+fi
+
+if [ -e "$FILE_CONF_TEMP" ];
+then
+    printf "Appeding above settings to $FILE_CONF:\n";
+    printf "\n";
+    cat $FILE_CONF_TEMP | xargs -I {} echo "    " {};
+    printf "\n";
+
+    echo "" >> $FILE_CONF;
+    cat $FILE_CONF_TEMP >> $FILE_CONF;
+    echo "" >> $FILE_CONF;
+fi
+
 printf "Starting squid.\n";
 
-$EXEC_SQUID -NYCd 1 ${SQUID_ARGS};
+$SQUID_EXECUTABLE -NYCd 1 ${SQUID_ARGS};
