@@ -16,7 +16,7 @@ SUFFIX_TEMPLATE=".template";
 DIR_CONF="/etc/squid";
 DIR_CONF_BACKUP="$DIR_CONF.original";
 DIR_CONF_TEMPLATES="$DIR_CONF.templates";
-DIR_CONF_DOCKER="$DIR_CONF.docker";
+DIR_CONF_DOCKER="$DIR_CONF.conf";
 DIR_SCRIPTS="${DIR_SCRIPTS:-/root}";
 
 if [ ! -e "$SQUID_EXECUTABLE" ];
