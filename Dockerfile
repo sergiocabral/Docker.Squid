@@ -8,7 +8,7 @@ RUN    apk update \
     && rm -rf /var/cache/apk/*
 
 COPY ./scripts/bash/split-to-lines.sh /root/
-COPY ./scripts/bash/envsubst-file.sh /root/
+COPY ./scripts/bash/envsubst-files.sh /root/
 
 COPY ./entrypoint.sh /root/
 

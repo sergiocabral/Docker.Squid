@@ -18,6 +18,7 @@ DIR_CONF_BACKUP="$DIR_CONF.original";
 DIR_CONF_TEMPLATES="$DIR_CONF.templates";
 DIR_CONF_DOCKER="$DIR_CONF.conf";
 DIR_SCRIPTS="${DIR_SCRIPTS:-/root}";
+LS="ls --color=auto -CFl";
 
 if [ ! -e "$SQUID_EXECUTABLE" ];
 then
@@ -33,19 +34,43 @@ then
     
     printf "Running squid for the first time.\n";
 
+    USER=squid;
+    DIR_LOG="/var/log/squid";        
+    chmod -R 755 $DIR_LOG && chown -R $USER:$USER $DIR_LOG;
+
     $SQUID_EXECUTABLE -Nz;
 
-    printf "Creating directories.\n";
+    printf "Configuring directories.\n";
 
     cp -R $DIR_CONF $DIR_CONF_BACKUP;
-    mv    $DIR_CONF $DIR_CONF_DOCKER;
+    cp -R $DIR_CONF/* $DIR_CONF_DOCKER/;
+    rm -R $DIR_CONF;
     ln -s $DIR_CONF_DOCKER $DIR_CONF;
-    mkdir $DIR_CONF_TEMPLATES;
-    cp    $DIR_CONF/*.conf $DIR_CONF_TEMPLATES;
-    cp    $DIR_CONF/*.css  $DIR_CONF_TEMPLATES;
-    ls -1 $DIR_CONF_TEMPLATES | xargs -I {} mv $DIR_CONF_TEMPLATES/{} $DIR_CONF_TEMPLATES/{}$SUFFIX_TEMPLATE;
+
+    mkdir -p $DIR_CONF_TEMPLATES;
+
+    if [ -d "$DIR_CONF_TEMPLATES" ] && [ ! -z "$(ls -A $DIR_CONF_TEMPLATES)" ];
+    then
+        printf "Warning: The $DIR_CONF_TEMPLATES directory already existed and will not have its content overwritten.\n";
+    else
+        printf "Creating file templates in $DIR_CONF_TEMPLATES.\n";
+
+        cp    $DIR_CONF/*.conf $DIR_CONF_TEMPLATES;
+        cp    $DIR_CONF/*.css  $DIR_CONF_TEMPLATES;
+        ls -1 $DIR_CONF_TEMPLATES | \
+           grep -v $SUFFIX_TEMPLATE | \
+           xargs -I {} mv $DIR_CONF_TEMPLATES/{} $DIR_CONF_TEMPLATES/{}$SUFFIX_TEMPLATE;    
+    fi
+    $LS -Ad $DIR_CONF_TEMPLATES/*;
+
+    printf "Configured directories:\n";
+
+    chmod -R 755 $DIR_LOG               && chown -R $USER:$USER $DIR_LOG;
+    chmod -R 755 $DIR_CONF_BACKUP       && chown -R $USER:$USER $DIR_CONF_BACKUP;
+    chmod -R 755 $DIR_CONF_TEMPLATES    && chown -R $USER:$USER $DIR_CONF_TEMPLATES;
+    chmod -R 755 $DIR_CONF_DOCKER       && chown -R $USER:$USER $DIR_CONF_DOCKER;
     
-    ls --color=auto -CFla -d $DIR_CONF $DIR_CONF_BACKUP $DIR_CONF_TEMPLATES $DIR_CONF_DOCKER;
+    $LS -d $DIR_CONF $DIR_CONF_BACKUP $DIR_CONF_TEMPLATES $DIR_CONF_DOCKER;
 else
     printf "This is NOT the first run.\n";
 fi
@@ -71,11 +96,10 @@ else
         USER=${USER_PASS[0]};
         PASS=${USER_PASS[1]};
 
-        htpasswd -b $DIR_CONF/passwd "$USER" "$PASS";
+        echo $PASS | htpasswd -i $DIR_CONF_DOCKER/passwd $USER;
     done
 
     printf "The authentication data was saved to $DIR_CONF/passwd.\n";
-
 fi
 
 $DIR_SCRIPTS/envsubst-files.sh "$SUFFIX_TEMPLATE" "$DIR_CONF_TEMPLATES" "$DIR_CONF";
