@@ -51,3 +51,22 @@ Or you can ignore environment variables and use the specific setting in the `squ
 ## Exposed Port
 
 The default working port for Squid is 3128. But can be modified in the `squid.conf` file.
+
+## Example for *docker-compose.yml*
+
+```
+version: "3.3"
+services:
+  proxy:
+    image: sergiocabral/squid
+    ports:
+      - 8080:3128
+    volumes:
+      - /docker-volumes/squid/templates:/etc/squid.templates
+      - /docker-volumes/squid/conf:/etc/squid.conf
+      - /docker-volumes/squid/log:/var/log/squid
+    environment:
+      - SQUID_USERS=username1=password1,username2=password2,username3=password3
+      - SQUID_LOGIN_MESSAGE=Cabrones Proxy Server
+      - SQUID_ALLOW_UNSECURE=true
+```
