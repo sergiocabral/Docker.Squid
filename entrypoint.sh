@@ -2,6 +2,20 @@
 
 set -e;
 
+printf "                                                     .                  \n";
+printf "   ___      _                                       ":"                 \n";
+printf "  / __\__ _| |__  _ __ ___  _ __   ___  ___       ___:____     |"\/"|   \n";
+printf " / /  / _' | '_ \| '__/ _ \| '_ \ / _ \/ __|    ,'        '.    \  /    \n";
+printf "/ /__| (_| | |_) | | | (_) | | | |  __/\__ \    |  O        \___/  |    \n";
+printf "\____/\__,_|_.__/|_|  \___/|_| |_|\___||___/  ~^~^~^~^~^~^~^~^~^~^~^~^~ \n";
+printf "       __             _     _                                           \n";
+printf "      / _\ __ _ _   _(_) __| |                                          \n";
+printf "      \ \ / _' | | | | |/ _' |            https://github.com            \n";
+printf "      _\ \ (_| | |_| | | (_| |                  /sergiocabral           \n";
+printf "      \__/\__, |\__,_|_|\__,_|                 /Docker.Squid            \n";
+printf "             |_|                                                        \n";
+printf "\n";
+
 printf "Entrypoint for docker image: squid\n";
 
 # Variables to configure externally.
