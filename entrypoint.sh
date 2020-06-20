@@ -53,7 +53,7 @@ then
     then
         printf "Warning: The $DIR_CONF_TEMPLATES directory already existed and will not have its content overwritten.\n";
     else
-        printf "Creating file templates in $DIR_CONF_TEMPLATES.\n";
+        printf "Creating file templates in $DIR_CONF_TEMPLATES\n";
 
         cp    $DIR_CONF/*.conf $DIR_CONF_TEMPLATES;
         cp    $DIR_CONF/*.css  $DIR_CONF_TEMPLATES;
@@ -77,7 +77,7 @@ fi
 
 printf "Tip: Use files $DIR_CONF_TEMPLATES/*$SUFFIX_TEMPLATE to make the files in the $DIR_CONF directory with replacement of environment variables with their values.\n";
 
-printf "Deleting previous authentication file $DIR_CONF/passwd.\n";
+printf "Deleting previous authentication file $DIR_CONF/passwd\n";
 rm -f $DIR_CONF/passwd;
 
 if [ -z $SQUID_USERS ];
@@ -99,7 +99,7 @@ else
         echo $PASS | htpasswd -i $DIR_CONF_DOCKER/passwd $USER;
     done
 
-    printf "The authentication data was saved to $DIR_CONF/passwd.\n";
+    printf "The authentication data was saved to $DIR_CONF/passwd\n";
 fi
 
 $DIR_SCRIPTS/envsubst-files.sh "$SUFFIX_TEMPLATE" "$DIR_CONF_TEMPLATES" "$DIR_CONF";
@@ -107,6 +107,7 @@ $DIR_SCRIPTS/envsubst-files.sh "$SUFFIX_TEMPLATE" "$DIR_CONF_TEMPLATES" "$DIR_CO
 # More details for squid.conf: http://www.squid-cache.org/Doc/config/auth_param/
 FILE_CONF="$DIR_CONF/squid.conf";
 FILE_CONF_TEMP="/tmp/squid.conf";
+COMMENT_DISABLED="#[disabled]";
 
 rm -f $FILE_CONF_TEMP;
 
@@ -122,26 +123,30 @@ fi
 
 if [ "$SQUID_ALLOW_UNSECURE" = true ];
 then
+    sed -i -e s/"http_access deny !Safe_ports"/"$COMMENT_DISABLED http_access deny !Safe_ports"/ $FILE_CONF;
+    sed -i -e s/"http_access deny CONNECT !SSL_ports"/"$COMMENT_DISABLED http_access deny CONNECT !SSL_ports"/ $FILE_CONF;
+
     echo "http_access allow !Safe_ports" >> $FILE_CONF_TEMP;
     echo "http_access allow CONNECT !SSL_ports" >> $FILE_CONF_TEMP;
 fi
 
-if [ "$SQUID_ALLOW_UNSECURE" = false ];
-then
-    echo "http_access deny !Safe_ports" >> $FILE_CONF_TEMP;
-    echo "http_access deny CONNECT !SSL_ports" >> $FILE_CONF_TEMP;
-fi
-
 if [ -e "$FILE_CONF_TEMP" ];
 then
-    printf "Appeding above settings to $FILE_CONF:\n";
+    sed -i -e s/"http_access deny all"/"$COMMENT_DISABLED http_access deny all"/ $FILE_CONF;
+    echo "http_access deny all" >> $FILE_CONF_TEMP;
+
+    printf "Appended to the configuration file at $FILE_CONF\n";
     printf "\n";
     cat $FILE_CONF_TEMP | xargs -I {} echo "    " {};
     printf "\n";
 
     echo "" >> $FILE_CONF;
-    cat $FILE_CONF_TEMP >> $FILE_CONF;
+    echo "# The settings below have been added based on" >> $FILE_CONF;
+    echo "# values received from the environment variables." >> $FILE_CONF;
+    echo "# Some settings above have been commented with '$COMMENT_DISABLED'." >> $FILE_CONF;
     echo "" >> $FILE_CONF;
+    cat $FILE_CONF_TEMP >> $FILE_CONF;
+    rm $FILE_CONF_TEMP;
 fi
 
 printf "Starting squid.\n";
