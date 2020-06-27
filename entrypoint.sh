@@ -56,8 +56,8 @@ then
 
     printf "Configuring directories.\n";
 
-    cp -R $DIR_CONF $DIR_CONF_BACKUP;
-    cp -R $DIR_CONF/* $DIR_CONF_DOCKER/;
+    mkdir -p $DIR_CONF_BACKUP && cp -R $DIR_CONF/* $DIR_CONF_BACKUP;
+    mkdir -p $DIR_CONF_DOCKER && cp -R $DIR_CONF/* $DIR_CONF_DOCKER;
     rm -R $DIR_CONF;
     ln -s $DIR_CONF_DOCKER $DIR_CONF;
 
