@@ -4,7 +4,7 @@ Proxy server using the Squid application.
 
 ## Configuration
 
-It is possible to configure user-based access and password based on the environment variable.
+It is possible to configure user and password authentication through an environment variable.
 
 Or you can ignore environment variables and use the specific setting in the `squid.conf` file.
 
