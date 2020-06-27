@@ -1,11 +1,10 @@
 FROM alpine:latest
 
-RUN    apk update \
-    && apk add bash \
-    && apk add gettext \
-    && apk add apache2-utils \
-    && apk add squid \
-    && rm -rf /var/cache/apk/*
+RUN apk add --no-cache \
+	bash \
+	gettext \
+	apache2-utils \
+	squid
 
 COPY ./scripts/bash/split-to-lines.sh /root/
 COPY ./scripts/bash/envsubst-files.sh /root/
